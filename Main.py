@@ -4,6 +4,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import yt_dlp as youtube_dl
 from pytube import Search
+import sys
 
 class SpotifyYouTubeDownloader:
     def __init__(self):
@@ -52,14 +53,34 @@ class SpotifyYouTubeDownloader:
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
+    def get_playlist_id(self, playlist_name):
+        playlists = self.sp.current_user_playlists()
+        for playlist in playlists['items']:
+            if playlist['name'].lower() == playlist_name.lower():
+                return playlist['id']
+        return None
+    
+    def get_playlist_tracks(self, playlist_id):
+        tracks = []
+        results = self.sp.playlist_tracks(playlist_id)
+        while results:
+            tracks.extend(results['items'])
+            results = self.sp.next(results)
+        return tracks
+        
+    
     def run(self):
+        self.get_playlist_tracks('')
         results = self.sp.current_user_saved_tracks()
         for idx, item in enumerate(results['items']):
             track = item['track']
             entire_video_title = f"{track['artists'][0]['name']} - {track['name']}"
             print(f"{idx + 1}: {entire_video_title}")
             youtube_video_link = self.get_youtube_link(entire_video_title)
-            self.download_video_as_mp3(youtube_video_link)
+            if youtube_video_link:
+                self.download_video_as_mp3(youtube_video_link)
+            else:
+                print(f"Couldn't find a youtube video link for {youtube_video_link}")
 
 if __name__ == '__main__':
     downloader = SpotifyYouTubeDownloader()
