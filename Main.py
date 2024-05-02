@@ -12,7 +12,7 @@ class SpotifyYouTubeDownloader:
         self.client_id = os.getenv("CLIENT_ID")
         self.client_secret = os.getenv("CLIENT_SECRET")
         self.redirect_URI = os.getenv("REDIRECT_URI")
-        self.scope = "user-library-read"
+        self.scope = "user-library-read playlist-read-private"
         self.mp3_directory = "mp3s"
 
         self.ensure_directory_exists(self.mp3_directory)
@@ -57,6 +57,7 @@ class SpotifyYouTubeDownloader:
         playlists = self.sp.current_user_playlists()
         for playlist in playlists['items']:
             if playlist['name'].lower() == playlist_name.lower():
+                print(playlist['id'])
                 return playlist['id']
         return None
     
@@ -70,17 +71,37 @@ class SpotifyYouTubeDownloader:
         
     
     def run(self):
-        self.get_playlist_tracks('')
-        results = self.sp.current_user_saved_tracks()
-        for idx, item in enumerate(results['items']):
-            track = item['track']
-            entire_video_title = f"{track['artists'][0]['name']} - {track['name']}"
-            print(f"{idx + 1}: {entire_video_title}")
-            youtube_video_link = self.get_youtube_link(entire_video_title)
-            if youtube_video_link:
-                self.download_video_as_mp3(youtube_video_link)
-            else:
-                print(f"Couldn't find a youtube video link for {youtube_video_link}")
+        playlist_name = ' '.join(sys.argv[1:]).lower() if len(sys.argv) > 1 else None
+        if sys.argv[1] == 'liked':
+            results = self.sp.current_user_saved_tracks()
+            for idx, item in enumerate(results['items']):
+                track = item['track']
+                entire_video_title = f"{track['artists'][0]['name']} - {track['name']}"
+                print(f"{idx + 1}: {entire_video_title}")
+                youtube_video_link = self.get_youtube_link(entire_video_title)
+                if youtube_video_link:
+                    self.download_video_as_mp3(youtube_video_link)
+                else:
+                    print(f"Couldn't find a youtube video link for {youtube_video_link}")
+        else:
+            if not playlist_name:
+                print("please provide a playlist name that is valid")
+                return
+            
+            playlist_id = self.get_playlist_id(playlist_name)
+            if not playlist_id:
+                print('playlist not found')
+                return
+            tracks = self.get_playlist_tracks(playlist_id)
+            for idx, item in enumerate(tracks):
+                track = item['track']
+                entire_video_title = f"{track['artists'][0]['name']} - {track['name']}"
+                print(f"{idx + 1}: {entire_video_title}")
+                youtube_video_link = self.get_youtube_link(entire_video_title)
+                if youtube_video_link:
+                    self.download_video_as_mp3(youtube_video_link)
+                else:
+                    print(f"Couldn't find a youtube video link for {youtube_video_link}")
 
 if __name__ == '__main__':
     downloader = SpotifyYouTubeDownloader()
