@@ -72,7 +72,7 @@ class SpotifyYouTubeDownloader:
     
     def run(self):
         playlist_name = ' '.join(sys.argv[1:]).lower() if len(sys.argv) > 1 else None
-        if sys.argv[1] == 'liked':
+        if playlist_name == None:
             results = self.sp.current_user_saved_tracks()
             for idx, item in enumerate(results['items']):
                 track = item['track']
