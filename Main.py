@@ -5,7 +5,13 @@ from spotipy.oauth2 import SpotifyOAuth
 import yt_dlp as youtube_dl
 from pytube import Search
 import sys
+import argparse
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Download tracks from Spotify playlists as an MP3 file via YouTube")
+    parser.add_argument('playlist', nargs='?', default = None, help='Name of the spotify playlist to download (default is your "Liked Songs").')
+    return parser.parse_args()
+    
 class SpotifyYouTubeDownloader:
     def __init__(self):
         load_dotenv()
@@ -23,7 +29,9 @@ class SpotifyYouTubeDownloader:
             redirect_uri=self.redirect_URI,
             scope=self.scope
         ))
+        
 
+    
     def ensure_directory_exists(self, file_path):
         if not os.path.exists(file_path):
             os.makedirs(file_path)
@@ -103,6 +111,8 @@ class SpotifyYouTubeDownloader:
                 else:
                     print(f"Couldn't find a youtube video link for {youtube_video_link}")
 
+
 if __name__ == '__main__':
+    args = parse_arguments()
     downloader = SpotifyYouTubeDownloader()
     downloader.run()
